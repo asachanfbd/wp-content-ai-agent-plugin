@@ -56,23 +56,95 @@ class WP_Content_AI_Agent {
 	public function __construct() {
 		// Hook into actions and filters here.
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
+		add_action( 'admin_init', array( $this, 'page_init' ) );
 	}
 
 	public function add_admin_menu() {
-		add_options_page(
-			'WP Content AI Agent Settings',
-			'WP AI Agent',
+		add_menu_page(
+			'AI Content Creator Settings',
+			'AI Content Creator',
 			'manage_options',
 			'wp-content-ai-agent',
-			array( $this, 'create_admin_page' )
+			array( $this, 'create_admin_page' ),
+			'dashicons-superhero',
+			6
+		);
+	}
+
+	public function page_init() {
+		register_setting(
+			'wp_content_ai_agent_option_group', // Option group
+			'wp_content_ai_agent_api_key', // Option name
+			array( $this, 'sanitize_api_key' ) // Sanitize
+		);
+
+		register_setting(
+			'wp_content_ai_agent_option_group', // Option group
+			'wp_content_ai_agent_model_id', // Option name
+			array( $this, 'sanitize_text_field' ) // Sanitize
+		);
+
+		add_settings_section(
+			'wp_content_ai_agent_setting_section', // ID
+			'API Configuration', // Title
+			array( $this, 'section_info' ), // Callback
+			'wp-content-ai-agent' // Page
+		);
+
+		add_settings_field(
+			'api_key', // ID
+			'API Key', // Title
+			array( $this, 'api_key_callback' ), // Callback
+			'wp-content-ai-agent', // Page
+			'wp_content_ai_agent_setting_section' // Section
+		);
+
+		add_settings_field(
+			'model_id', // ID
+			'Model ID', // Title
+			array( $this, 'model_id_callback' ), // Callback
+			'wp-content-ai-agent', // Page
+			'wp_content_ai_agent_setting_section' // Section
+		);
+	}
+
+	public function sanitize_api_key( $input ) {
+		return sanitize_text_field( $input );
+	}
+
+	public function sanitize_text_field( $input ) {
+		return sanitize_text_field( $input );
+	}
+
+	public function section_info() {
+		print 'Enter your OpenRouter API settings below:';
+	}
+
+	public function api_key_callback() {
+		printf(
+			'<input type="password" id="api_key" name="wp_content_ai_agent_api_key" value="%s" class="regular-text" />',
+			esc_attr( get_option( 'wp_content_ai_agent_api_key' ) )
+		);
+	}
+
+	public function model_id_callback() {
+		printf(
+			'<input type="text" id="model_id" name="wp_content_ai_agent_model_id" value="%s" class="regular-text" placeholder="google/gemini-2.0-flash-exp" />',
+			esc_attr( get_option( 'wp_content_ai_agent_model_id' ) )
 		);
 	}
 
 	public function create_admin_page() {
 		?>
 		<div class="wrap">
-			<h1>WP Content AI Agent</h1>
-			<p>Welcome to the WP Content AI Agent plugin settings.</p>
+			<h1>AI Content Creator</h1>
+			<form method="post" action="options.php">
+				<?php
+				settings_fields( 'wp_content_ai_agent_option_group' );
+				do_settings_sections( 'wp-content-ai-agent' );
+				submit_button();
+				?>
+			</form>
 		</div>
 		<?php
 	}
