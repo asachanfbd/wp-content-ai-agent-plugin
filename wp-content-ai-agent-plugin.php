@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name:       WP Content AI Agent
- * Plugin URI:        https://example.com/plugins/wp-content-ai-agent/
- * Description:       A basic WordPress plugin boilerplate for an AI content agent.
+ * Plugin URI:        https://www.coravity.com/plugins/wp-content-ai-agent/
+ * Description:       An AI content agent for WordPress, helps in creating and refreshing content on posts.
  * Version:           1.0.0
  * Requires at least: 5.2
  * Requires PHP:      7.2
- * Author:            Your Name
- * Author URI:        https://example.com/
+ * Author:            Abhishek Sachan
+ * Author URI:        https://www.coravity.com/
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       wp-content-ai-agent
