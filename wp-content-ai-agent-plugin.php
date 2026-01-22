@@ -56,6 +56,8 @@ class WP_Content_AI_Agent {
 	public function __construct() {
 		// Hook into actions and filters here.
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
+		add_action( 'add_meta_boxes', array( $this, 'register_meta_boxes' ) );
+		add_action( 'save_post', array( $this, 'save_meta_box_data' ) );
 	}
 
 	public function add_admin_menu() {
@@ -75,6 +77,88 @@ class WP_Content_AI_Agent {
 			<p>Welcome to the WP Content AI Agent plugin settings.</p>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Register the meta box.
+	 */
+	public function register_meta_boxes() {
+		add_meta_box(
+			'wp_content_ai_agent_meta_box',          // ID
+			__( 'AI Content Instructions', 'wp-content-ai-agent' ), // Title
+			array( $this, 'render_meta_box' ),       // Callback
+			'post',                                  // Screen (post type)
+			'side',                                  // Context
+			'default'                                // Priority
+		);
+	}
+
+	/**
+	 * Render the meta box content.
+	 *
+	 * @param WP_Post $post The post object.
+	 */
+	public function render_meta_box( $post ) {
+		// Add an nonce field so we can check for it later.
+		wp_nonce_field( 'wp_content_ai_agent_save_meta_box_data', 'wp_content_ai_agent_meta_box_nonce' );
+
+		// Use get_post_meta() to retrieve an existing value from the database and use the value for the form.
+		$value = get_post_meta( $post->ID, '_wp_ai_content_instructions', true );
+
+		echo '<label for="wp_ai_content_instructions">';
+		_e( 'Provide the topic or keywords for the AI generation:', 'wp-content-ai-agent' );
+		echo '</label>';
+		echo '<textarea id="wp_ai_content_instructions" name="wp_ai_content_instructions" rows="4" style="width:100%; margin-top: 10px;">' . esc_textarea( $value ) . '</textarea>';
+		
+		echo '<div style="margin-top: 10px;">';
+		echo '<button type="button" class="button button-primary" disabled>' . __( 'Generate', 'wp-content-ai-agent' ) . '</button>';
+		echo '</div>';
+	}
+
+	/**
+	 * Save the meta box data.
+	 *
+	 * @param int $post_id The post ID.
+	 */
+	public function save_meta_box_data( $post_id ) {
+		// Check if our nonce is set.
+		if ( ! isset( $_POST['wp_content_ai_agent_meta_box_nonce'] ) ) {
+			return;
+		}
+
+		// Verify that the nonce is valid.
+		if ( ! wp_verify_nonce( $_POST['wp_content_ai_agent_meta_box_nonce'], 'wp_content_ai_agent_save_meta_box_data' ) ) {
+			return;
+		}
+
+		// If this is an autosave, our form has not been submitted, so we don't want to do anything.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		// Check the user's permissions.
+		if ( isset( $_POST['post_type'] ) && 'page' === $_POST['post_type'] ) {
+			if ( ! current_user_can( 'edit_page', $post_id ) ) {
+				return;
+			}
+		} else {
+			if ( ! current_user_can( 'edit_post', $post_id ) ) {
+				return;
+			}
+		}
+
+		/* OK, it's safe for us to save the data now. */
+
+		// Make sure that it is set.
+		if ( ! isset( $_POST['wp_ai_content_instructions'] ) ) {
+			return;
+		}
+
+		// Sanitize user input.
+		$my_data = sanitize_textarea_field( $_POST['wp_ai_content_instructions'] );
+
+		// Update the meta field in the database.
+		update_post_meta( $post_id, '_wp_ai_content_instructions', $my_data );
 	}
 }
 
